@@ -1,0 +1,47 @@
+version: "3.8"
+
+networks:
+  archmirror:
+  frontend:
+    external: true
+
+services:
+  archmirror:
+    image: nginx:alpine
+    networks: ['frontend','archmirror']
+    container_name: archmirror
+    restart: unless-stopped
+    volumes:
+      - /srv/archmirror:/usr/share/nginx/html/archmirror:ro
+      - /srv/pxe/http:/usr/share/nginx/html/pxe:ro
+      - /data/compose/archmirror/nginx-default.conf:/etc/nginx/conf.d/default.conf:rw
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=frontend"
+      - "traefik.http.routers.archmirror.rule=Host(`${ARCHMIRROR_FQDN}`)"
+      - "traefik.http.routers.archmirror.tls.options=tls12@file"
+      - "traefik.http.routers.archmirror.entrypoints=websecure"
+      - "traefik.http.routers.archmirror.tls=true"
+      - "traefik.http.routers.archmirror.tls.certresolver=route53rsa"
+      - "traefik.http.routers.archmirror.service=archmirror-svc"
+      - "traefik.http.services.archmirror-svc.loadbalancer.server.port=80"
+      # (optional) HSTS
+      - "traefik.http.middlewares.hsts.headers.stsseconds=31536000"
+      - "traefik.http.routers.archmirror.middlewares=hsts"
+
+  mirror-sync:
+    image: alpine:latest
+    container_name: archmirror-sync
+    restart: unless-stopped
+    volumes:
+      - /srv/archmirror:/srv/archmirror
+    entrypoint: ["/bin/sh","-c"]
+    # Sync every 3h; change RSYNC_SOURCE to a nearby tier-1
+    command:
+      - |
+        apk add --no-cache rsync;
+        while true; do
+          echo "[sync] $(date) syncing from ${RSYNC_SOURCE}...";
+          rsync -av --delete "${RSYNC_SOURCE}" /srv/archmirror/ && echo "[sync] done";
+          sleep 10800;
+        done
