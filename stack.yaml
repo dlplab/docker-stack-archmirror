@@ -14,7 +14,7 @@ services:
     volumes:
       - /srv/mirror/arch:/usr/share/nginx/html/archmirror:ro
       - /srv/pxe/http:/usr/share/nginx/html/pxe:ro
-      - /data/compose/archmirror/nginx-default.conf:/etc/nginx/conf.d/default.conf:rw
+      - /data/compose/mirror/arch/nginx-default.conf:/etc/nginx/conf.d/default.conf:rw
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=frontend"
