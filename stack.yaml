@@ -9,10 +9,10 @@ services:
   archmirror:
     image: nginx:alpine
     networks: ['frontend','archmirror']
-    container_name: archmirror
+    container_name: mirror-arch
     restart: unless-stopped
     volumes:
-      - /srv/archmirror:/usr/share/nginx/html/archmirror:ro
+      - /srv/mirror/arch:/usr/share/nginx/html/archmirror:ro
       - /srv/pxe/http:/usr/share/nginx/html/pxe:ro
       - /data/compose/archmirror/nginx-default.conf:/etc/nginx/conf.d/default.conf:rw
     labels:
@@ -31,10 +31,10 @@ services:
 
   mirror-sync:
     image: alpine:latest
-    container_name: archmirror-sync
+    container_name: mirror-arch-sync
     restart: unless-stopped
     volumes:
-      - /srv/archmirror:/srv/archmirror
+      - /srv/mirror/arch:/srv/mirror/arch
     entrypoint: ["/bin/sh","-c"]
     # Sync every 3h; change RSYNC_SOURCE to a nearby tier-1
     command:
@@ -42,6 +42,6 @@ services:
         apk add --no-cache rsync;
         while true; do
           echo "[sync] $(date) syncing from ${RSYNC_SOURCE}...";
-          rsync -av --delete "${RSYNC_SOURCE}" /srv/archmirror/ && echo "[sync] done";
+          rsync -av --delete "${RSYNC_SOURCE}" /srv/mirror/arch/ && echo "[sync] done";
           sleep 10800;
         done
