@@ -7,7 +7,7 @@ networks:
 
 services:
   archmirror:
-    image: nginx:alpine
+    image: nginx:stable-alpine
     networks: ['frontend','archmirror']
     container_name: mirror-arch
     restart: unless-stopped
